@@ -1,0 +1,14 @@
+package com.BankManagement.Model.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.BankManagement.Model.entities.Compte;
+import com.BankManagement.Model.entities.Utilisateur;
+
+
+public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
+Utilisateur findByComptes(List<Compte> comptes);
+
+}

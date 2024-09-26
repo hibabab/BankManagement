@@ -1,0 +1,51 @@
+package com.elitech.services;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
+
+import com.elitech.model.dto.CompteDto;
+import com.elitech.model.entities.Compte;
+import com.elitech.model.mappers.CompteMapper;
+import com.elitech.repository.CompteRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class CompteServiceImp implements CompteService {
+
+    private  CompteRepository compteRepository;
+
+    @Override
+    public Page<CompteDto> getAllComptes(Pageable pageable) {
+        Page<Compte> comptes = compteRepository.findAll(pageable);
+        return comptes.map(CompteMapper::convertToDTO);
+    }
+
+    @Override
+    public void deleteOne(long id) {
+        // Check if the compte exists before attempting to delete
+        if (!compteRepository.existsById(id)) {
+            throw new CompteNotFoundException("Compte not found with id: " + id);
+        }
+        compteRepository.deleteById(id);
+    }
+
+    @Override
+    public CompteDto getCompteById(long id) {
+        return compteRepository.findById(id)
+                .map(CompteMapper::convertToDTO)
+                .orElseThrow(() -> new CompteNotFoundException("Compte not found with id: " + id));
+    }
+}
+
+// Custom Exception
+@ResponseStatus(HttpStatus.NOT_FOUND)
+class CompteNotFoundException extends RuntimeException {
+    public CompteNotFoundException(String message) {
+        super(message);
+    }
+}

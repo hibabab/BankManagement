@@ -1,0 +1,99 @@
+package com.elitech.services;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import com.BankManagement.Model.Dto.CompteDto;
+import com.BankManagement.Model.Dto.ProfileDto;
+import com.BankManagement.Model.Dto.UtilisateurDto;
+import com.BankManagement.Model.entities.Compte;
+import com.BankManagement.Model.entities.Profile;
+import com.BankManagement.Model.entities.Utilisateur;
+import com.BankManagement.model.mappers.CompteMapper;
+import com.BankManagement.model.mappers.UtilisateurMapper;
+import com.elitech.repository.CompteRepository;
+import com.elitech.repository.UtilisateurRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class UtilisateurServiceImp implements UtilisateurService {
+
+    // Dépendances injectées
+    private  UtilisateurRepository utilisateurRepository;
+    private  CompteRepository compteRepository;
+
+    // Ajouter un nouvel utilisateur
+    @Override
+    public UtilisateurDto addOneUtilisateur(UtilisateurDto utilisateurDto) {
+        Utilisateur utilisateur = UtilisateurMapper.convertToEntity(utilisateurDto);  // Convertir DTO en entité
+        Utilisateur savedUtilisateur = utilisateurRepository.save(utilisateur);       // Sauvegarder l'entité
+        return UtilisateurMapper.convertToDTO(savedUtilisateur);                      // Convertir et retourner l'entité sauvegardée en DTO
+    }
+
+    // Récupérer tous les utilisateurs avec pagination
+    @Override
+    public Page<UtilisateurDto> getAllUtilisateur(Pageable pageable) {
+        Page<Utilisateur> utilisateurs = utilisateurRepository.findAll(pageable);     // Récupérer les utilisateurs de manière paginée
+        return utilisateurs.map(UtilisateurMapper::convertToDTO);                     // Mapper chaque utilisateur vers un DTO
+    }
+
+    // Récupérer un utilisateur spécifique par ID
+    @Override
+    public Optional<UtilisateurDto> getOneUtilisateur(long id) {
+        return utilisateurRepository.findById(id)                                     // Chercher l'utilisateur par ID
+                .map(UtilisateurMapper::convertToDTO);                                // Convertir l'utilisateur en DTO s'il est trouvé
+    }
+
+    // Supprimer un utilisateur par ID
+    @Override
+    public void deleteOneUtilisateur(long id) {
+        utilisateurRepository.deleteById(id);                                         // Supprimer l'utilisateur par ID
+    }
+
+    // Assigner un compte à un utilisateur
+    @Override
+    public UtilisateurDto assignCompteToUtilisateur(long idUser, CompteDto compteDto) {
+        // Chercher l'utilisateur par ID, sinon lever une exception
+        Utilisateur utilisateur = utilisateurRepository.findById(idUser)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur avec l'ID " + idUser + " n'a pas été trouvé."));
+
+        // Convertir le DTO de compte en entité
+        Compte compte = CompteMapper.convertToEntity(compteDto);
+        compte.setUtilisateur(utilisateur);                                           // Assigner le compte à l'utilisateur
+
+        // Sauvegarder le compte et l'ajouter à la liste de comptes de l'utilisateur
+        Compte savedCompte = compteRepository.save(compte);
+        utilisateur.getComptes().add(savedCompte);
+
+        return UtilisateurMapper.convertToDTO(utilisateur);                           // Retourner l'utilisateur mis à jour en DTO
+    }
+
+    // Récupérer un utilisateur par un compte spécifique
+    @Override
+    public UtilisateurDto findByComptes(long idCompte) {
+        // Chercher le compte par ID
+        Compte compte = compteRepository.findById(idCompte)
+                .orElseThrow(() -> new EntityNotFoundException("Compte avec l'ID " + idCompte + " n'a pas été trouvé."));
+
+        // Chercher l'utilisateur associé à ce compte
+        List<Compte> comptes = new ArrayList<>();
+        comptes.add(compte);
+
+        Utilisateur utilisateur = utilisateurRepository.findByComptes(comptes);
+        return UtilisateurMapper.convertToDTO(utilisateur);                           // Retourner l'utilisateur en DTO
+    }
+
+	@Override
+	public ProfileDto assignProfileToUtilisateur(long idUser, Profile ProfileDto) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}

@@ -1,0 +1,11 @@
+package com.BankManagement.Model.repository;
+
+
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.BankManagement.Model.entities.Compte;
+
+public interface CompteRepository extends JpaRepository<Compte, Long> {
+
+}
